@@ -1,0 +1,142 @@
+package test.ski;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.regex.Pattern;
+
+public class SkiingInSg {
+
+
+	public static void main(String[] args) {
+		
+		int numCol = 0;
+		int numRow = 0;
+		//Create list of slope positions
+		ArrayList<Slope> listOfSlopes = new ArrayList<Slope>();
+		try(BufferedReader br = new BufferedReader(new FileReader("source.txt"))) {
+		    StringBuilder sb = new StringBuilder();
+		    String line = br.readLine();
+		    //Just read the first line as the size
+		    String[] parts = line.split(Pattern.quote(" ")); // Split on space
+		    for (int i = 0; i < parts.length; i++) {
+		    	System.out.println("val : " + parts[i]);
+		    }
+		    if (parts.length >= 2) {
+		    	//Assume num col by num row since the actual test data is also a square
+		    	numCol = Integer.parseInt(parts[0]);
+		    	numRow = Integer.parseInt(parts[1]);
+		    }
+		    int rowCount = 0;
+		    if (line!=null) {
+		    	//read one more line?
+		    	line = br.readLine();
+		    }
+		    while (line != null) {
+		        System.out.println("line : " + line);		    	
+		        sb.append(line);
+		        sb.append(System.lineSeparator());
+
+		        //second line onwards the grid starts from 0
+			    String[] heights = line.split(Pattern.quote(" ")); // Split on space
+			    //We know the num positions are according to the num of cols 
+			    for (int colCount = 0; colCount < numCol; colCount++) {
+			    	//Create a position			    	
+			    	Position myPos = new Position(colCount, rowCount, Integer.parseInt(heights[colCount]));
+			    	Boolean isAppended = false;
+			    	//If we can find its neighbours anywhere and it is lower than its neighbours, add to an existing slope
+			    	//literate through listOfSlopes
+			    	for (int iter=0; iter< listOfSlopes.size(); iter++) {
+			    		//For each end of slope, check if it has neighbours and add
+			    		int lastIndex = listOfSlopes.get(iter).getSlopePositions().size();
+			    		if (isNeighbour(listOfSlopes.get(iter).getSlopePositions().get(lastIndex-1).getColVal(),
+			    				listOfSlopes.get(iter).getSlopePositions().get(lastIndex-1).getRowVal(),
+			    				myPos.getColVal(),
+			    				myPos.getRowVal())) {
+			    			if (listOfSlopes.get(iter).getSlopePositions().get(lastIndex-1).getHeightVal() > myPos.getHeightVal()) {
+			    				isAppended = true;
+			    				listOfSlopes.get(iter).getSlopePositions().add(myPos);
+			    			}
+			    		}
+			    	}
+
+			    	if (isAppended == false) {			    		    	
+			    		ArrayList<Position> posArray = new ArrayList<Position>();
+			    		posArray.add(myPos);
+			    		
+			    		Slope slope = new Slope();			
+			    		slope.setSlopePositions(posArray);
+			    		
+			    		listOfSlopes.add(slope);			    		
+			    	}
+//			    	Slope mySlope = new Slope();
+//			    	mySlope.getSlopePositions().add(myPos);
+//			    	listOfSlopes.add(mySlope);
+			    }
+			    rowCount++;
+		        line = br.readLine();
+		    }
+		    
+		    //After generating this slope list
+		    int indexLongestSlopeAndSteepest =0;
+		    int longestSlope = 0;
+		    int steepnestOfFirstSlope = 0;
+		    for (int iter=0; iter< listOfSlopes.size(); iter++) {
+	    		//Look for the longest slopes
+		    	int currentSlopeLength = listOfSlopes.get(iter).getSlopePositions().size();
+		    	if (currentSlopeLength > longestSlope) {
+		    		if (currentSlopeLength > 2) {
+		    			//Calculate the steepnest of the first two points
+		    			int steep =
+		    			listOfSlopes.get(iter).getSlopePositions().get(0).getHeightVal() -
+		    			listOfSlopes.get(iter).getSlopePositions().get(1).getHeightVal();
+		    			if (steep > steepnestOfFirstSlope) {
+		    				indexLongestSlopeAndSteepest = iter;
+		    				longestSlope = currentSlopeLength;
+		    				steepnestOfFirstSlope = steep;
+		    			}
+		    		}
+		    	}
+	    	}
+		    
+		    //Finally we have the answer:
+		    System.out.println("The longest slope is of length: " + listOfSlopes.get(indexLongestSlopeAndSteepest).getSlopePositions().size());
+		    String outstring = "The longest slope is as follows: \n";
+		    for (int iter = 0; iter < listOfSlopes.get(indexLongestSlopeAndSteepest).getSlopePositions().size(); iter ++) {
+		    	outstring += listOfSlopes.get(indexLongestSlopeAndSteepest).getSlopePositions().get(iter).getColVal();
+		    	outstring += " : " + listOfSlopes.get(indexLongestSlopeAndSteepest).getSlopePositions().get(iter).getRowVal();
+		    	outstring += " ( " + listOfSlopes.get(indexLongestSlopeAndSteepest).getSlopePositions().get(iter).getHeightVal() + " ); ";
+		    }
+	    	System.out.println(outstring);
+		    
+		    
+		   // String everything = sb.toString();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+	private static boolean isNeighbour(int colVal, int rowVal, int colVal2, int rowVal2) {
+		boolean bIsNeighbour = false;
+		// this is a neighbour if the col is same and row is +1 or -1 OR row is same and col is +1 or -1
+		if (colVal == colVal2) {
+			if (((rowVal - rowVal2) == -1) || ((rowVal - rowVal2) == 1)) {
+				bIsNeighbour = true;
+			}
+		}
+		else if (rowVal == rowVal2) {
+			if (((colVal - colVal2) == -1) || ((colVal - colVal2) == 1)) {
+				bIsNeighbour = true;
+			}			
+		}
+		return bIsNeighbour;
+	}
+
+}
